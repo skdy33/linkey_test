@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<title>Web Speech API Demo</title>
+<title>linkey Demo</title>
 <style>
   * {
     font-family: Verdana, Arial, sans-serif;
@@ -74,6 +74,16 @@
     text-align: left;
     min-height: 150px;
   }
+
+  #scripts {
+    font-size: 14px;
+    font-weight: bold;
+    border: 1px solid #ddd;
+    padding: 15px;
+    text-align: left;
+    min-height: 150px;
+ 
+  }
   #start_button {
     border: 0;
     background-color:transparent;
@@ -81,12 +91,12 @@
   }
 </style>
 <h1 class="center" id="headline">
-  <a href="http://dvcs.w3.org/hg/speech-api/raw-file/tip/speechapi.html">
-    Web Speech API</a> Demonstration</h1>
+  <a href="http://linkey.co.kr">
+    LINKEY demo</a></h1>
 <div id="info">
-  <p id="info_start">Click on the microphone icon and begin speaking.</p>
-  <p id="info_speak_now">Speak now.</p>
-  <p id="info_no_speech">No speech was detected. You may need to adjust your
+  <p id="info_start" display='none'></p>
+  <p id="info_speak_now" display='none'></p>
+  <p id="info_no_speech" >No speech was detected. You may need to adjust your
     <a href="//support.google.com/chrome/bin/answer.py?hl=en&amp;answer=1407892">
       microphone settings</a>.</p>
   <p id="info_no_microphone" style="display:none">
@@ -103,37 +113,49 @@
 </div>
 <div class="right">
   <button id="start_button" onclick="startButton(event)">
-    <img id="start_img" src="mic.gif" alt="Start"></button>
+    <img id="start_img" >Start</button>
 </div>
 <div id="results">
   <span id="final_span" class="final"></span>
   <span id="interim_span" class="interim"></span>
   <p>
 </div>
+<ul id="scripts">
+</ul>
 <div class="center">
   <div class="sidebyside" style="text-align:right">
-    <button id="copy_button" class="button" onclick="copyButton()">
-      Copy and Paste</button>
     <div id="copy_info" class="info">
       Press Control-C to copy text.<br>(Command-C on Mac.)
     </div>
   </div>
   <div class="sidebyside">
-    <button id="email_button" class="button" onclick="emailButton()">
-      Create Email</button>
     <div id="email_info" class="info">
       Text sent to default email application.<br>
       (See chrome://settings/handlers to change.)
     </div>
   </div>
   <p>
-  <div id="div_language">
-    <select id="select_language" onchange="updateCountry()"></select>
+  <div id="div_language" >
+    <select id="select_language" onchange="updateCountry()" display='none'></select>
     &nbsp;&nbsp;
     <select id="select_dialect"></select>
   </div>
 </div>
 <script>
+
+var script_list = [
+	"안녕하세요",
+	"제 이름은 이상헌 입니다.",
+	"오늘 날씨는 참 좋네요.",
+]
+
+var ul = document.getElementById("scripts");
+for (var i = 0; i < script_list.length; i++){
+	var li = document.createElement("li");
+	li.appendChild(document.createTextNode(script_list[i]));
+	ul.appendChild(li);
+}
+
 var langs =
 [['Afrikaans',       ['af-ZA']],
  ['Bahasa Indonesia',['id-ID']],
@@ -201,7 +223,8 @@ var langs =
 for (var i = 0; i < langs.length; i++) {
   select_language.options[i] = new Option(langs[i][0], i);
 }
-select_language.selectedIndex = 6;
+select_language.selectedIndex = 28;
+select_language.style.visibility = 'hidden';
 updateCountry();
 select_dialect.selectedIndex = 6;
 showInfo('info_start');
@@ -280,17 +303,31 @@ if (!('webkitSpeechRecognition' in window)) {
     }
   };
 
+  var flag = false;
+  var interim_transcript;
+  var rec_interim_transcript;
+
   recognition.onresult = function(event) {
-    var interim_transcript = '';
+	if(!flag){
+	  interim_transcript = '찾고있는 중입니다.';
+	}
     for (var i = event.resultIndex; i < event.results.length; ++i) {
       if (event.results[i].isFinal) {
         final_transcript += event.results[i][0].transcript;
       } else {
-        interim_transcript += event.results[i][0].transcript;
+        rec_interim_transcript += event.results[i][0].transcript;
       }
     }
     final_transcript = capitalize(final_transcript);
-    final_span.innerHTML = linebreak(final_transcript);
+	for(var i = 0; i < script_list.length; i++){
+		if(rec_interim_transcript.length <3){
+		  return
+		}
+		if(script_list[i].indexOf(rec_interim_transcript.slice(-2))!=-1){
+		  interim_transcript = script_list[i]
+		}
+	}
+//    final_span.innerHTML = linebreak(final_transcript);
     interim_span.innerHTML = linebreak(interim_transcript);
     if (final_transcript || interim_transcript) {
       showButtons('inline-block');
@@ -357,7 +394,7 @@ function startButton(event) {
   recognition.start();
   ignore_onend = false;
   final_span.innerHTML = '';
-  interim_span.innerHTML = '';
+  interim_span.innerHTML = '찾고있는 중입니다';
   start_img.src = 'mic-slash.gif';
   showInfo('info_allow');
   showButtons('none');
